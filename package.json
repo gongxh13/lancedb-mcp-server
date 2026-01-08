@@ -1,0 +1,38 @@
+{
+  "name": "lancedb-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for LanceDB",
+  "files": [
+    "bin/cli.js",
+    "scripts/install.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "lancedb-mcp-server": "bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "build:local": "cargo build --release && cp target/release/lancedb-mcp-server bin/",
+    "dev": "npm run build:local && node bin/cli.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gongxh13/lancedb-mcp-server.git"
+  },
+  "keywords": [
+    "lancedb",
+    "mcp",
+    "server"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gongxh13/lancedb-mcp-server/issues"
+  },
+  "homepage": "https://github.com/gongxh13/lancedb-mcp-server#readme",
+  "dependencies": {
+    "grpc-tools": "^1.13.1"
+  }
+}

@@ -4,7 +4,7 @@ use arrow::datatypes::{DataType, Field, Schema};
 use futures::TryStreamExt;
 use lancedb::connection::Connection;
 use lancedb::query::{ExecutableQuery, QueryBase};
-use lancedb::{connect, Table};
+use lancedb::{connect, Table, DistanceType};
 use std::sync::Arc;
 use crate::embeddings::EmbeddingModel;
 
@@ -126,6 +126,7 @@ impl VectorDB {
         // Search
         let results = table
             .vector_search(query_vec.clone())?
+            .distance_type(DistanceType::Cosine)
             .limit(limit)
             .execute()
             .await?;
