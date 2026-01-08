@@ -28,7 +28,7 @@ jobs:
           - os: ubuntu-latest
             platform_name: Linux
             target: aarch64-unknown-linux-gnu
-            use_cross: true
+            use_cross: false
             artifact_name: lancedb-mcp-server
             asset_name: lancedb-mcp-server-linux-arm64
 
@@ -69,6 +69,41 @@ jobs:
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: brew install protobuf
+    
+    - name: Set macOS deployment target for x86_64
+      if: matrix.target == 'x86_64-apple-darwin'
+      shell: bash
+      run: |
+        echo "MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
+        echo "RUSTFLAGS=-C target-cpu=core2 -C target-feature=-avx512f,-avx512bw,-avx512dq,-avx2,-avx,-fma,-f16c" >> $GITHUB_ENV
+        echo "LANCE_DISABLE_AVX512=1" >> $GITHUB_ENV
+    
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: powershell
+      run: |
+        choco install protoc -y
+        $protoc = (Get-Command protoc).Source
+        echo "PROTOC=$protoc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    
+    - name: Set PROTOC env (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+    
+    - name: Set OpenSSL env (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
+        echo "OPENSSL_NO_PKG_CONFIG=1" >> $GITHUB_ENV
+    
+    - name: Install Linux ARM64 toolchain
+      if: matrix.os == 'ubuntu-latest' && matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkg-config
+        echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+        echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> $GITHUB_ENV
+        echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
@@ -79,7 +114,13 @@ jobs:
       if: matrix.use_cross
       run: cargo install cross --git https://github.com/cross-rs/cross
 
-    - name: Build binary
+    - name: Build binary (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: powershell
+      run: cargo build --release --target ${{ matrix.target }}
+    
+    - name: Build binary (Linux/macOS)
+      if: matrix.os != 'windows-latest'
       shell: bash
       run: |
         if [ "${{ matrix.use_cross }}" == "true" ]; then
@@ -88,7 +129,14 @@ jobs:
           cargo build --release --target ${{ matrix.target }}
         fi
 
-    - name: Rename binary
+    - name: Rename binary (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: powershell
+      run: |
+        Copy-Item "target\${{ matrix.target }}\release\${{ matrix.artifact_name }}" "${{ matrix.asset_name }}"
+    
+    - name: Rename binary (Linux/macOS)
+      if: matrix.os != 'windows-latest'
       shell: bash
       run: |
         cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} ${{ matrix.asset_name }}

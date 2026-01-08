@@ -187,10 +187,53 @@ lancedb-mcp-server \
 - Rust 1.75+
 - `protoc` (用于编译 LanceDB 依赖)
 
+### 安装 protoc（按平台）
+ 
+macOS:
+ 
 ```bash
-# 安装 protoc (如果需要)
-npm install -g grpc-tools
-
-# 运行检查
-PROTOC=$(pwd)/node_modules/grpc-tools/bin/protoc cargo check
+brew install protobuf
+```
+ 
+Linux（Debian/Ubuntu）:
+ 
+```bash
+sudo apt-get update
+sudo apt-get install -y protobuf-compiler
+```
+ 
+Linux（CentOS/RHEL/Fedora）:
+ 
+```bash
+sudo dnf install -y protobuf-compiler
+# 或
+sudo yum install -y protobuf-compiler
+```
+ 
+Windows（使用 Chocolatey）:
+ 
+```powershell
+choco install protoc -y
+```
+ 
+无法通过包管理器安装时，可从官方发布页面下载二进制包：
+ 
+https://github.com/protocolbuffers/protobuf/releases
+ 
+### 配置并验证
+ 
+如果 `protoc` 不在系统 PATH 中，请设置环境变量：
+ 
+macOS/Linux:
+ 
+```bash
+export PROTOC=$(which protoc)
+cargo check
+```
+ 
+Windows（PowerShell）:
+ 
+```powershell
+$env:PROTOC = (Get-Command protoc).Source
+cargo check
 ```
